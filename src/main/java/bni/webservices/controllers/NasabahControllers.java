@@ -6,11 +6,12 @@
 package bni.webservices.controllers;
 
 import bni.webservices.models.Nasabah;
-import bni.webservices.response.ResponseRest;
+import bni.webservices.response.ResponseApi;
 import bni.webservices.services.NasabahService;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,65 +34,69 @@ public class NasabahControllers {
     @Autowired
     private NasabahService service;
     
-    
-    @GetMapping("/")
-    public List<Nasabah> listCountries(){
-        return service.read();
+    @GetMapping("")
+    public ResponseApi<List<Nasabah>> listCountries(){
+        return ResponseApi.apiOk(service.read(), "success");
     }
     
     @GetMapping("ktp/{id}")
-    public ResponseRest getByKtp(@PathVariable("id")String noKtp){
+    public ResponseApi<Nasabah> getByKtp(@PathVariable("id")String noKtp){
         if(service.findByKtp(noKtp) == null){
-             return new ResponseRest(false,null,"Not found");
+             return ResponseApi.apiFailed("Not found",HttpStatus.BAD_REQUEST);
         }
         else{
-            return new ResponseRest(true,service.findByKtp(noKtp),"founded");
+            return ResponseApi.apiOk(service.findByKtp(noKtp), "success");
         }
     }
     
     @PostMapping("")
-    public ResponseRest addNasabah(@RequestBody Nasabah nasabah){
+    public ResponseApi<Optional<Nasabah>> addNasabah(@RequestBody Nasabah nasabah){
         if(service.findByKtp(nasabah.getNomorKtp()) != null){
-             return new ResponseRest(false,null,"Sorry user has already registered");
+            return ResponseApi.apiFailed("Sorry user has already registered",HttpStatus.BAD_REQUEST);
         }
         else{
             if(validationKtp(nasabah.getNomorKtp()) == true){
                 if(service.save(nasabah) != true){
-                    return new ResponseRest(false,null,"Error");
+                    return ResponseApi.apiFailed("Please fill out the form completely ",HttpStatus.INTERNAL_SERVER_ERROR);
                 }
                 Optional<Nasabah> nsbh = service.findById(nasabah.getId());
 
-                return new ResponseRest(true,nsbh,"Add Successfull");
+                return ResponseApi.apiOk(nsbh, "success");
             }
             else{
-                return new ResponseRest(true,null,"Please input valid no ktp");
+                return ResponseApi.apiFailed("No nik maximal 16 character ",HttpStatus.BAD_REQUEST);
             }
         }
     }
     
     @PutMapping("")
-    public ResponseRest updateNasabah(@RequestBody Nasabah nasabah){
-        if(validationKtp(nasabah.getNomorKtp()) == true){
-            if(service.save(nasabah) != true){
-                return new ResponseRest(false,null,"Error");
-            }
-            Optional<Nasabah> nsbh = service.findById(nasabah.getId());
-
-            return new ResponseRest(true,nsbh,"Update Successfull");
+    public ResponseApi<Optional<Nasabah>> updateNasabah(@RequestBody Nasabah nasabah){
+        if(service.findByKtp(nasabah.getNomorKtp()) != null){
+            return ResponseApi.apiFailed("Sorry user has already registered",HttpStatus.BAD_REQUEST);
         }
         else{
-            return new ResponseRest(true,null,"Please input valid no ktp");
+            if(validationKtp(nasabah.getNomorKtp()) == true){
+                if(service.save(nasabah) != true){
+                    return ResponseApi.apiFailed("Please fill out the form completely ",HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                Optional<Nasabah> nsbh = service.findById(nasabah.getId());
+
+                return ResponseApi.apiOk(nsbh, "success");
+            }
+            else{
+                return ResponseApi.apiFailed("No nik maximal 16 character ",HttpStatus.BAD_REQUEST);
+            }
         }
     }
     
     @DeleteMapping("{id}")
-    public ResponseRest deleteNasabah(@PathVariable("id") Integer id){
+    public ResponseApi deleteNasabah(@PathVariable("id") Integer id){
         
        if(service.delete(id) != true){  
            
-           return new ResponseRest(false,null,"Error");
+           return ResponseApi.apiFailed("Please select id",HttpStatus.BAD_REQUEST);
        }
-       return new ResponseRest(true,null,"Delete Successfull");
+       return ResponseApi.apiOk("Delete success");
     }
     
     public boolean validationKtp(String noKtp){
