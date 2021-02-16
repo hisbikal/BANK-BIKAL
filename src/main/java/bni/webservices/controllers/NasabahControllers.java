@@ -35,14 +35,19 @@ public class NasabahControllers {
     private NasabahService service;
     
     @GetMapping("")
-    public ResponseApi<List<Nasabah>> listCountries(){
-        return ResponseApi.apiOk(service.read(), "success");
+    public ResponseApi<List<Nasabah>> findAll(){
+        if(service.read().size() == 0){
+             return ResponseApi.apiOk("Sorry data not avalaible");
+        }
+        else{
+            return ResponseApi.apiOk(service.read(), "success");
+        }
     }
     
     @GetMapping("ktp/{id}")
     public ResponseApi<Nasabah> getByKtp(@PathVariable("id")String noKtp){
         if(service.findByKtp(noKtp) == null){
-             return ResponseApi.apiFailed("Not found",HttpStatus.BAD_REQUEST);
+            return ResponseApi.apiFailed("Not found",HttpStatus.BAD_REQUEST);
         }
         else{
             return ResponseApi.apiOk(service.findByKtp(noKtp), "success");
@@ -56,12 +61,14 @@ public class NasabahControllers {
         }
         else{
             if(validationKtp(nasabah.getNomorKtp()) == true){
-                if(service.save(nasabah) != true){
-                    return ResponseApi.apiFailed("Please fill out the form completely ",HttpStatus.INTERNAL_SERVER_ERROR);
+                try{
+                    service.save(nasabah);
+                    Optional<Nasabah> nsbh = service.lastData();
+                    return ResponseApi.apiOk( nsbh,"success");
                 }
-                Optional<Nasabah> nsbh = service.findById(nasabah.getId());
-
-                return ResponseApi.apiOk(nsbh, "success");
+                catch(Exception e){
+                     return ResponseApi.apiFailed("Please fill out the form completely ",HttpStatus.INTERNAL_SERVER_ERROR);
+                }
             }
             else{
                 return ResponseApi.apiFailed("No nik maximal 16 character ",HttpStatus.BAD_REQUEST);
@@ -70,33 +77,30 @@ public class NasabahControllers {
     }
     
     @PutMapping("")
-    public ResponseApi<Optional<Nasabah>> updateNasabah(@RequestBody Nasabah nasabah){
-        if(service.findByKtp(nasabah.getNomorKtp()) != null){
-            return ResponseApi.apiFailed("Sorry user has already registered",HttpStatus.BAD_REQUEST);
+    public ResponseApi<Nasabah> updateNasabah(@RequestBody Nasabah nasabah){
+        if(validationKtp(nasabah.getNomorKtp()) == true){
+            try{
+                return ResponseApi.apiOk(service.save(nasabah),"success");
+            }
+            catch(Exception e){
+                 return ResponseApi.apiFailed("Please fill out the form completely ",HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
         else{
-            if(validationKtp(nasabah.getNomorKtp()) == true){
-                if(service.save(nasabah) != true){
-                    return ResponseApi.apiFailed("Please fill out the form completely ",HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                Optional<Nasabah> nsbh = service.findById(nasabah.getId());
-
-                return ResponseApi.apiOk(nsbh, "success");
-            }
-            else{
-                return ResponseApi.apiFailed("No nik maximal 16 character ",HttpStatus.BAD_REQUEST);
-            }
+            return ResponseApi.apiFailed("No nik maximal 16 character ",HttpStatus.BAD_REQUEST);
         }
     }
     
     @DeleteMapping("{id}")
     public ResponseApi deleteNasabah(@PathVariable("id") Integer id){
         
-       if(service.delete(id) != true){  
-           
-           return ResponseApi.apiFailed("Please select id",HttpStatus.BAD_REQUEST);
-       }
-       return ResponseApi.apiOk("Delete success");
+        try{
+            service.delete(id);
+            return ResponseApi.apiOk("success");
+        }
+        catch(Exception e){
+             return ResponseApi.apiFailed("Please select id ",HttpStatus.BAD_REQUEST);
+        }
     }
     
     public boolean validationKtp(String noKtp){

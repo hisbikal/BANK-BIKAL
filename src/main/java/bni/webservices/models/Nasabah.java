@@ -5,6 +5,9 @@
  */
 package bni.webservices.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.sun.istack.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.Basic;
@@ -45,6 +48,7 @@ public class Nasabah implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
     @Column(name = "id")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Integer id;
     @Basic(optional = false)
     @Column(name = "nama_lengkap")

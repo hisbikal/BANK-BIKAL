@@ -26,32 +26,25 @@ public class NasabahService {
         return repo.findAll();
     }
     
-    public boolean save(Nasabah nasabah){
+    public Nasabah save(Nasabah nasabah){
         Optional<Nasabah> dataNasabah = repo.findById(nasabah.getId());
         
         try{
             if(dataNasabah.isPresent()){
-                repo.save(nasabah);
+                repo.updateData(nasabah.getNamaLengkap(),nasabah.getAlamat(),nasabah.getTanggalLahir(),nasabah.getNoHandphone(),nasabah.getId());
             }
             else{
-                repo.save(nasabah);
+                repo.insertData(nasabah.getNamaLengkap(),nasabah.getAlamat(),nasabah.getTanggalLahir(),nasabah.getNoHandphone(),nasabah.getNomorKtp());
             }
         }
         catch(Exception ex){
             System.out.println(ex);
         }
-        return true;
+        return nasabah;
     }
     
-    public boolean delete(Integer nasabahId){
-       try{
-            repo.deleteById(nasabahId);
-            return true;
-        }
-        catch(Exception ex){
-            System.out.println(ex);
-            return false;
-        }
+    public void delete(Integer nasabahId){
+        repo.deleteById(nasabahId);
     }
     
     public Nasabah findByKtp(String noKtp){
@@ -60,5 +53,9 @@ public class NasabahService {
     
     public Optional<Nasabah> findById(Integer nasabahId){
         return repo.findById(nasabahId);
+    }
+    
+    public Optional<Nasabah> lastData(){
+        return repo.lastData();
     }
 }
